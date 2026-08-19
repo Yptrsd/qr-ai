@@ -1,0 +1,47 @@
+# .github/workflows/pre-commit.yml
+name: Pre-commit
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ---------- 设置 Java（Kotlin 钩子需要） ----------
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          # 如果钩子需要 Gradle 或 Maven 依赖，可以在此缓存
+          cache: 'gradle'   # 或 'maven'，根据你的构建工具选择
+
+      # ---------- 设置 Python（pre-commit 本身需要） ----------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ---------- 缓存 pre-commit 环境（钩子依赖） ----------
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+
+      # ---------- 安装 pre-commit ----------
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      # ---------- 运行所有钩子 ----------
+      - name: Run pre-commit on all files
+        run: pre-commit run --all-files --show-diff-on-failure
