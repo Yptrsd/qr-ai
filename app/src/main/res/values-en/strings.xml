@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">QR-AI</string>
+    <string name="input_hint">Type your question...</string>
+
+    <!-- 思考模式 -->
+    <string name="think_label">Think</string>
+    <string name="think_off">Off</string>
+    <string name="think_low">Low</string>
+    <string name="think_medium">Medium</string>
+    <string name="think_high">High</string>
+    <string name="think_max">Max</string>
+
+    <!-- 上滑清除 -->
+    <string name="swipe_clear_hint">↑ Swipe up to clear</string>
+
+    <!-- 联网模式 -->
+    <string name="net_off">Offline</string>
+    <string name="net_on">Online</string>
+    <string name="net_auto">Auto</string>
+    <string name="net_off_label">🚫 Offline</string>
+    <string name="net_on_label">🌐 Online</string>
+    <string name="net_auto_label">🌐 Auto</string>
+
+    <!-- 消息区 -->
+    <string name="msg_setup_hint">Tap ⚙ to set up your API first</string>
+    <string name="msg_no_api">No API configured</string>
+    <string name="msg_no_web_template">(This API has no web search template)</string>
+    <string name="msg_web_template_error">(Web search template parse error: %1$s)</string>
+    <string name="msg_searching">Searching the web...</string>
+    <string name="msg_clear_done">Cleared</string>
+    <string name="msg_error">❌ %1$s</string>
+
+    <!-- 默认 System Prompt -->
+    <string name="default_system_prompt">You are a concise Q&amp;A assistant. Answer briefly.</string>
+
+    <!-- 设置页 -->
+    <string name="settings_title">Settings</string>
+    <string name="api_list_label">API configs (tap to edit, long-press to delete, tap dot to select)</string>
+    <string name="api_add">+ Add API</string>
+    <string name="btn_save">Save</string>
+    <string name="toast_saved">Saved</string>
+    <string name="api_list_empty">No API configs yet. Add one.</string>
+    <string name="dialog_delete_title">Delete</string>
+    <string name="dialog_delete_msg">Delete "%1$s"?</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- 添加/编辑 API 弹窗 -->
+    <string name="preset_deepseek">DeepSeek</string>
+    <string name="preset_openai">OpenAI</string>
+    <string name="preset_mimo">Xiaomi MiMo</string>
+    <string name="preset_anthropic">Anthropic</string>
+    <string name="preset_kimi">Kimi (Moonshot)</string>
+    <string name="preset_glm">GLM (Zhipu)</string>
+    <string name="preset_grok">Grok (xAI)</string>
+    <string name="preset_gemini">Gemini (Google)</string>
+    <string name="preset_custom">Custom</string>
+    <string name="label_provider_preset">Provider preset</string>
+    <string name="label_name">Name</string>
+    <string name="hint_name">Name</string>
+    <string name="label_api_key">API Key</string>
+    <string name="label_base_url">Base URL</string>
+    <string name="label_endpoint">Endpoint</string>
+    <string name="endpoint_chat">chat (Chat Completions)</string>
+    <string name="endpoint_responses">responses (Responses API)</string>
+    <string name="endpoint_auto">auto (Auto detect)</string>
+    <string name="label_web_search">Web search template</string>
+    <string name="hint_web_search">Web search JSON, e.g. {"tools":[{"type":"web_search"}]} (empty = no web search)</string>
+    <string name="label_model">Model</string>
+    <string name="btn_fetch">Fetch</string>
+    <string name="hint_manual_model">Or type model name (e.g. deepseek-v4-flash)</string>
+    <string name="dialog_add_title">Add API</string>
+    <string name="dialog_edit_title">Edit API</string>
+    <string name="btn_save_apply">Save &amp; Apply</string>
+    <string name="btn_add">Add</string>
+    <string name="toast_select_model">Please select or enter a model</string>
+    <string name="toast_reason_banned">Reasoning models are disabled (quick Q&amp;A)</string>
+    <string name="toast_web_json_error">Web search template JSON is invalid</string>
+    <string name="toast_saved_config">Saved to config</string>
+    <string name="toast_need_api_key">Please enter API Key first</string>
+    <string name="toast_no_models">No models fetched</string>
+    <string name="toast_models_fetched">Fetched %1$d models</string>
+    <string name="toast_fetch_failed">Fetch failed: %1$d</string>
+    <string name="toast_network_error">Network error: %1$s</string>
+
+    <!-- Debug -->
+    <string name="debug_load_title">Debug: loadApis()</string>
+    <string name="debug_load_msg">Read from prefs:\n%1$s\n\napis.size = %2$d\nafter parse\nactiveIndex = %3$d</string>
+    <string name="debug_save_btn_title">Debug: Save button</string>
+    <string name="debug_save_btn_msg">isEdit = %1$b\neditIndex = %2$d\nselectedModel = \'%3$s\'\neditApi is null = %4$b\neditApi content = %5$s</string>
+    <string name="debug_save_title">Debug: save()</string>
+    <string name="debug_save_msg">apis.size = %1$d\nactiveIndex = %2$d\nserialized: %3$s\nwritten to prefs (apis len = %4$d)</string>
+    <string name="btn_close">Close</string>
+</resources>

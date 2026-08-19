@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">QR-AI</string>
+    <string name="input_hint">輸入問題...</string>
+
+    <!-- 思考模式 -->
+    <string name="think_label">思考</string>
+    <string name="think_off">關閉</string>
+    <string name="think_low">低</string>
+    <string name="think_medium">中</string>
+    <string name="think_high">高</string>
+    <string name="think_max">最大</string>
+
+    <!-- 上滑清除 -->
+    <string name="swipe_clear_hint">↑ 上滑清除</string>
+
+    <!-- 聯網模式 -->
+    <string name="net_off">不聯網</string>
+    <string name="net_on">聯網</string>
+    <string name="net_auto">自動</string>
+    <string name="net_off_label">🚫 離線</string>
+    <string name="net_on_label">🌐 聯網</string>
+    <string name="net_auto_label">🌐 自動</string>
+
+    <!-- 訊息區 -->
+    <string name="msg_setup_hint">請先點擊 ⚙ 設定 API</string>
+    <string name="msg_no_api">無 API 設定</string>
+    <string name="msg_no_web_template">(此 API 未設定聯網模板)</string>
+    <string name="msg_web_template_error">(聯網模板解析失敗: %1$s)</string>
+    <string name="msg_searching">正在聯網搜尋...</string>
+    <string name="msg_clear_done">已清空</string>
+    <string name="msg_error">❌ %1$s</string>
+
+    <!-- 預設 System Prompt -->
+    <string name="default_system_prompt">你是一個簡潔的問答助手。用中文回答，盡量簡短。</string>
+
+    <!-- 設定頁 -->
+    <string name="settings_title">設定</string>
+    <string name="api_list_label">API 設定（點擊編輯，長按刪除，點圓圈選中）</string>
+    <string name="api_add">+ 新增 API</string>
+    <string name="btn_save">儲存</string>
+    <string name="toast_saved">已儲存</string>
+    <string name="api_list_empty">暫無 API 設定，請新增</string>
+    <string name="dialog_delete_title">刪除</string>
+    <string name="dialog_delete_msg">刪除「%1$s」？</string>
+    <string name="btn_delete">刪除</string>
+    <string name="btn_cancel">取消</string>
+
+    <!-- 新增/編輯 API 彈窗 -->
+    <string name="preset_deepseek">DeepSeek</string>
+    <string name="preset_openai">OpenAI</string>
+    <string name="preset_mimo">小米 MiMo</string>
+    <string name="preset_anthropic">Anthropic</string>
+    <string name="preset_kimi">Kimi (Moonshot)</string>
+    <string name="preset_glm">GLM (智譜)</string>
+    <string name="preset_grok">Grok (xAI)</string>
+    <string name="preset_gemini">Gemini (Google)</string>
+    <string name="preset_custom">自訂</string>
+    <string name="label_provider_preset">服務商預設</string>
+    <string name="label_name">名稱</string>
+    <string name="hint_name">名稱</string>
+    <string name="label_api_key">API Key</string>
+    <string name="label_base_url">Base URL</string>
+    <string name="label_endpoint">端點類型</string>
+    <string name="endpoint_chat">chat (Chat Completions)</string>
+    <string name="endpoint_responses">responses (Responses API)</string>
+    <string name="endpoint_auto">auto (自動偵測)</string>
+    <string name="label_web_search">聯網搜尋模板</string>
+    <string name="hint_web_search">聯網模板，如 {"tools":[{"type":"web_search"}]}（可留空=不支援聯網）</string>
+    <string name="label_model">Model</string>
+    <string name="btn_fetch">取得</string>
+    <string name="hint_manual_model">或手動輸入模型名稱（如 deepseek-v4-flash）</string>
+    <string name="dialog_add_title">新增 API</string>
+    <string name="dialog_edit_title">編輯 API</string>
+    <string name="btn_save_apply">儲存並套用</string>
+    <string name="btn_add">新增</string>
+    <string name="toast_select_model">請選擇或輸入模型</string>
+    <string name="toast_reason_banned">推理模型已停用（快問快答）</string>
+    <string name="toast_web_json_error">聯網模板 JSON 格式錯誤</string>
+    <string name="toast_saved_config">已儲存到設定</string>
+    <string name="toast_need_api_key">請先輸入 API Key</string>
+    <string name="toast_no_models">未取得模型</string>
+    <string name="toast_models_fetched">取得 %1$d 個模型</string>
+    <string name="toast_fetch_failed">取得失敗: %1$d</string>
+    <string name="toast_network_error">網路錯誤: %1$s</string>
+
+    <!-- Debug -->
+    <string name="debug_load_title">Debug: loadApis()</string>
+    <string name="debug_load_msg">從 prefs 讀取:\n%1$s\n\n解析後 apis.size = %2$d\nactiveIndex = %3$d</string>
+    <string name="debug_save_btn_title">Debug: 儲存按鈕</string>
+    <string name="debug_save_btn_msg">isEdit = %1$b\neditIndex = %2$d\nselectedModel = \'%3$s\'\neditApi 是否為 null = %4$b\neditApi 目前內容 = %5$s</string>
+    <string name="debug_save_title">Debug: save()</string>
+    <string name="debug_save_msg">apis.size = %1$d\nactiveIndex = %2$d\n序列化後: %3$s\n已寫入 prefs (apis 長度 = %4$d)</string>
+    <string name="btn_close">關閉</string>
+</resources>

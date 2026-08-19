@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <!-- 上方内容区：顶栏 + 聊天区（填满，底部被浮动输入栏覆盖部分用 padding 补偿） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- 顶部栏 -->
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/bg"
+            android:elevation="0dp"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
+
+            <!-- 状态栏占位 -->
+            <View
+                android:id="@+id/statusBarSpacer"
+                android:layout_width="match_parent"
+                android:layout_height="0dp" />
+
+            <!-- 工具行：模型选择 + 联网按钮 + 设置 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/modelSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/spinner_bg"
+                    android:popupBackground="#FFFFFFFF" />
+
+                <TextView
+                    android:id="@+id/netBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/net_btn_bg"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"
+                    android:text="@string/net_auto_label"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/settingsBtn"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="4dp"
+                    android:gravity="center"
+                    android:text="⚙"
+                    android:textColor="@color/aiText"
+                    android:textSize="20sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider" />
+
+        <!-- 消息区域 -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <ScrollView
+                android:id="@+id/scroll"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:padding="12dp"
+                android:paddingBottom="130dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/messageList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- 底部浮动输入区：思考条 + 输入栏（键盘弹出时贴着键盘顶部） -->
+    <LinearLayout
+        android:id="@+id/inputPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/surface"
+        android:elevation="8dp"
+        android:orientation="vertical">
+
+        <!-- 思考模式选择器 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp">
+
+            <TextView
+                android:id="@+id/thinkLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/think_label"
+                android:textColor="@color/hint"
+                android:textSize="13sp" />
+
+            <SeekBar
+                android:id="@+id/thinkBar"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_marginHorizontal="8dp"
+                android:maxHeight="32dp"
+                android:minHeight="32dp"
+                android:layout_weight="1"
+                android:max="4"
+                android:progress="0" />
+
+            <TextView
+                android:id="@+id/thinkVal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/think_off"
+                android:textColor="@color/accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 输入栏 -->
+        <LinearLayout
+            android:id="@+id/inputBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp">
+
+            <EditText
+                android:id="@+id/input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/input_bg"
+                android:elevation="0dp"
+                android:gravity="center_vertical"
+                android:hint="@string/input_hint"
+                android:imeOptions="actionSend"
+                android:inputType="textMultiLine"
+                android:maxLines="5"
+                android:minHeight="48dp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="10dp"
+                android:textColor="@color/inputText"
+                android:textColorHint="@color/hint"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/sendBtn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/btn_bg"
+                android:elevation="0dp"
+                android:text=">"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>
