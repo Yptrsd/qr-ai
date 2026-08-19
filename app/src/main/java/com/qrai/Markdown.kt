@@ -17,7 +17,6 @@ import android.text.style.UnderlineSpan
  * 设计原则：简单可靠，覆盖快问快答常见场景，不做复杂嵌套。
  */
 object Markdown {
-
     fun render(text: String): SpannableStringBuilder {
         val sb = SpannableStringBuilder()
         renderBody(sb, text)
@@ -46,7 +45,11 @@ object Markdown {
             if (trimmed.startsWith("|") && i + 1 < n && isTableSeparator(lines[i + 1].trim())) {
                 flushText()
                 val tbl = StringBuilder()
-                tbl.append(line).append("\n").append(lines[i + 1]).append("\n")
+                tbl
+                    .append(line)
+                    .append("\n")
+                    .append(lines[i + 1])
+                    .append("\n")
                 i += 2
                 while (i < n && lines[i].trimStart().startsWith("|")) {
                     tbl.append(lines[i]).append("\n")
@@ -62,7 +65,10 @@ object Markdown {
         return blocks
     }
 
-    private fun renderBody(sb: SpannableStringBuilder, text: String) {
+    private fun renderBody(
+        sb: SpannableStringBuilder,
+        text: String,
+    ) {
         val lines = text.split("\n")
         var i = 0
         val n = lines.size
@@ -87,7 +93,12 @@ object Markdown {
                 val codeEnd = sb.length
                 sb.append("\n\n")
                 sb.setSpan(TypefaceSpan("monospace"), codeStart, codeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                sb.setSpan(BackgroundColorSpan(0xFFEDEDED.toInt()), codeStart, codeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                sb.setSpan(
+                    BackgroundColorSpan(0xFFEDEDED.toInt()),
+                    codeStart,
+                    codeEnd,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
                 continue
             }
             // 表格：`| a | b |` 开头，且下一行为分隔行 `|---|`
@@ -98,7 +109,7 @@ object Markdown {
                     tableHeaderIdx = i
                 }
                 if (tableHeaderIdx >= 0) {
-                    i += 2  // 跳过表头行和分隔行
+                    i += 2 // 跳过表头行和分隔行
                     // 收集数据行到空行/结束/非表格行
                     val rows = ArrayList<ArrayList<String>>()
                     while (i < n && lines[i].trimStart().startsWith("|")) {
@@ -149,7 +160,10 @@ object Markdown {
     }
 
     /** 块级公式：居中、大号、斜体紫色 */
-    private fun renderBlockFormula(sb: SpannableStringBuilder, formula: String) {
+    private fun renderBlockFormula(
+        sb: SpannableStringBuilder,
+        formula: String,
+    ) {
         sb.append("\n")
         val start = sb.length
         sb.append("    ").append(parseLatexFormula(formula))
@@ -206,71 +220,86 @@ object Markdown {
             guard++
         }
         // 处理 \left( \right) 等 → 转换为 ( )
-        result = result
-            .replace("\\left(", "(")
-            .replace("\\right)", ")")
-            .replace("\\left[", "[")
-            .replace("\\right]", "]")
-            .replace("\\left\\{", "{")
-            .replace("\\right\\}", "}")
-            .replace("\\left|", "|")
-            .replace("\\right|", "|")
-            .replace("\\left\\langle", "⟨")
-            .replace("\\right\\rangle", "⟩")
+        result =
+            result
+                .replace("\\left(", "(")
+                .replace("\\right)", ")")
+                .replace("\\left[", "[")
+                .replace("\\right]", "]")
+                .replace("\\left\\{", "{")
+                .replace("\\right\\}", "}")
+                .replace("\\left|", "|")
+                .replace("\\right|", "|")
+                .replace("\\left\\langle", "⟨")
+                .replace("\\right\\rangle", "⟩")
         // 移除其它转义命令前缀的反斜杠
-        result = result
-            .replace("\\cdot", "·")
-            .replace("\\times", "×")
-            .replace("\\pm", "±")
-            .replace("\\sqrt", "√")
-            .replace("\\sec", "sec")
-            .replace("\\csc", "csc")
-            .replace("\\cot", "cot")
-            .replace("\\arcsin", "arcsin")
-            .replace("\\arccos", "arccos")
-            .replace("\\arctan", "arctan")
-            .replace("\\pi", "π")
-            .replace("\\theta", "θ")
-            .replace("\\alpha", "α")
-            .replace("\\beta", "β")
-            .replace("\\gamma", "γ")
-            .replace("\\delta", "δ")
-            .replace("\\epsilon", "ε")
-            .replace("\\infty", "∞")
-            .replace("\\neq", "≠")
-            .replace("\\leq", "≤")
-            .replace("\\geq", "≥")
-            .replace("\\approx", "≈")
-            .replace("\\sim", "∼")
-            .replace("\\sum", "∑")
-            .replace("\\prod", "∏")
-            .replace("\\int", "∫")
-            .replace("\\Delta", "Δ")
-            .replace("\\nabla", "∇")
-            .replace("\\partial", "∂")
-            .replace("\\log", "log")
-            .replace("\\ln", "ln")
-            .replace("\\sin", "sin")
-            .replace("\\cos", "cos")
-            .replace("\\tan", "tan")
-            .replace("\\lim", "lim")
-            .replace("\\max", "max")
-            .replace("\\min", "min")
-            .replace("\\quad", "  ")
-            .replace("\\,", " ")
+        result =
+            result
+                .replace("\\cdot", "·")
+                .replace("\\times", "×")
+                .replace("\\pm", "±")
+                .replace("\\sqrt", "√")
+                .replace("\\sec", "sec")
+                .replace("\\csc", "csc")
+                .replace("\\cot", "cot")
+                .replace("\\arcsin", "arcsin")
+                .replace("\\arccos", "arccos")
+                .replace("\\arctan", "arctan")
+                .replace("\\pi", "π")
+                .replace("\\theta", "θ")
+                .replace("\\alpha", "α")
+                .replace("\\beta", "β")
+                .replace("\\gamma", "γ")
+                .replace("\\delta", "δ")
+                .replace("\\epsilon", "ε")
+                .replace("\\infty", "∞")
+                .replace("\\neq", "≠")
+                .replace("\\leq", "≤")
+                .replace("\\geq", "≥")
+                .replace("\\approx", "≈")
+                .replace("\\sim", "∼")
+                .replace("\\sum", "∑")
+                .replace("\\prod", "∏")
+                .replace("\\int", "∫")
+                .replace("\\Delta", "Δ")
+                .replace("\\nabla", "∇")
+                .replace("\\partial", "∂")
+                .replace("\\log", "log")
+                .replace("\\ln", "ln")
+                .replace("\\sin", "sin")
+                .replace("\\cos", "cos")
+                .replace("\\tan", "tan")
+                .replace("\\lim", "lim")
+                .replace("\\max", "max")
+                .replace("\\min", "min")
+                .replace("\\quad", "  ")
+                .replace("\\,", " ")
         return result
     }
 
     /** 字符串转 Unicode 上标（支持 0-9、( ) 等常见字符） */
     private fun superscript(text: String): String {
-        val map = mapOf(
-            '0' to '⁰', '1' to '¹', '2' to '²', '3' to '³', '4' to '⁴',
-            '5' to '⁵', '6' to '⁶', '7' to '⁷', '8' to '⁸', '9' to '⁹',
-            'n' to 'ⁿ', 'i' to 'ⁱ',
-            '(' to '⁽', ')' to '⁾',
-            '+' to '⁺', '-' to '⁻', '=' to '⁼',
-            'x' to 'ˣ'
-        )
+        val map =
+            mapOf(
+                '0' to '⁰',
+                '1' to '¹',
+                '2' to '²',
+                '3' to '³',
+                '4' to '⁴',
+                '5' to '⁵',
+                '6' to '⁶',
+                '7' to '⁷',
+                '8' to '⁸',
+                '9' to '⁹',
+                'n' to 'ⁿ',
+                'i' to 'ⁱ',
+                '(' to '⁽',
+                ')' to '⁾',
+                '+' to '⁺',
+                '-' to '⁻',
+                '=' to '⁼',
+                'x' to 'ˣ',
+            )
         return text.map { ch -> map[ch] ?: ch }.joinToString("")
     }
 
@@ -299,9 +328,14 @@ object Markdown {
     }
 
     /** 渲染表格：斑马纹、单元格对齐、表头加粗 */
-    private fun renderTable(sb: SpannableStringBuilder, header: ArrayList<String>, rows: ArrayList<ArrayList<String>>) {
+    private fun renderTable(
+        sb: SpannableStringBuilder,
+        header: ArrayList<String>,
+        rows: ArrayList<ArrayList<String>>,
+    ) {
         val cols = header.size
         if (cols == 0) return
+
         // 计算每列最大宽度（中文字符算 2 宽度）
         fun displayWidth(s: String): Int = s.fold(0) { acc, ch -> acc + if (ch.code > 127) 2 else 1 }
         val widths = IntArray(cols) { displayWidth(header[it]) }
@@ -327,7 +361,12 @@ object Markdown {
         sb.append("\n")
     }
 
-    private fun appendTableRow(sb: SpannableStringBuilder, row: ArrayList<String>, widths: IntArray, bold: Boolean) {
+    private fun appendTableRow(
+        sb: SpannableStringBuilder,
+        row: ArrayList<String>,
+        widths: IntArray,
+        bold: Boolean,
+    ) {
         val sbRow = SpannableStringBuilder()
         sbRow.append("  │ ")
         for (c in widths.indices) {
@@ -347,7 +386,10 @@ object Markdown {
         sb.append("\n")
     }
 
-    private fun renderLine(sb: SpannableStringBuilder, line: String) {
+    private fun renderLine(
+        sb: SpannableStringBuilder,
+        line: String,
+    ) {
         // 标题
         val h = Regex("^(#{1,6})\\s+(.+)$").find(line)
         if (h != null) {
@@ -355,9 +397,13 @@ object Markdown {
             val start = sb.length
             renderInline(sb, h.groupValues[2])
             val end = sb.length
-            val size = when (lvl) {
-                1 -> 1.6f; 2 -> 1.4f; 3 -> 1.2f; else -> 1.0f
-            }
+            val size =
+                when (lvl) {
+                    1 -> 1.6f
+                    2 -> 1.4f
+                    3 -> 1.2f
+                    else -> 1.0f
+                }
             sb.setSpan(RelativeSizeSpan(size), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             sb.setSpan(StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             sb.append("\n\n")
@@ -406,8 +452,13 @@ object Markdown {
         sb.append("\n")
     }
 
-    /** 行内解析：处理 `代码`、`$公式$`、`**粗体**`、`*斜体*`、`~~删除~~`、`^上标^`、`~下标~`、`[链接](url)` */
-    private fun renderInline(sb: SpannableStringBuilder, text: String) {
+    /**
+     * 行内解析：处理代码、公式、粗体、斜体、删除线、上标、下标、链接
+     */
+    private fun renderInline(
+        sb: SpannableStringBuilder,
+        text: String,
+    ) {
         var i = 0
         val n = text.length
         val plain = StringBuilder()

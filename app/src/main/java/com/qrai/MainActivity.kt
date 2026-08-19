@@ -32,7 +32,6 @@ import java.net.URL
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
-
     private lateinit var scroll: ScrollView
     private lateinit var messageList: LinearLayout
     private lateinit var input: EditText
@@ -64,19 +63,20 @@ class MainActivity : Activity() {
     private var baseUrl = "https://api.deepseek.com"
     private var model = "deepseek-v4-flash"
     private var systemPrompt = ""
-    private var endpoint = "chat"       // chat | responses | auto
-    private var webSearchJson = ""      // 联网模板（可空 = 该 API 不支持联网）
+    private var endpoint = "chat" // chat | responses | auto
+    private var webSearchJson = "" // 联网模板（可空 = 该 API 不支持联网）
 
     // 思考模式: 0=关闭, 1=低, 2=中, 3=高, 4=最大
     private var thinkLevel = 0
 
     // 上滑清屏提示
     private var clearHint: TextView? = null
+
     // 上滑清屏：滚到底部后向上滑动超阈值触发，带冷却防抖
     private var wasAtBottom = true
     private var lastClearTime = 0L
-    private var clearThreshold = 300  // dp 值，onCreate 里转为像素
-    private val CLEAR_COOLDOWN = 1000L // 1秒冷却
+    private var clearThreshold = 300 // dp 值，onCreate 里转为像素
+    private val clearCooldown = 1000L // 1秒冷却
 
     // APIs list from settings
     private var apis = mutableListOf<JSONObject>()
@@ -93,12 +93,18 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         // 联网模式字符串（需 onCreate 后 Context 就绪再初始化）
-        netModes = arrayOf(
-            getString(R.string.net_off), getString(R.string.net_on), getString(R.string.net_auto)
-        )
-        netLabels = arrayOf(
-            getString(R.string.net_off_label), getString(R.string.net_on_label), getString(R.string.net_auto_label)
-        )
+        netModes =
+            arrayOf(
+                getString(R.string.net_off),
+                getString(R.string.net_on),
+                getString(R.string.net_auto),
+            )
+        netLabels =
+            arrayOf(
+                getString(R.string.net_off_label),
+                getString(R.string.net_on_label),
+                getString(R.string.net_auto_label),
+            )
 
         messageList = findViewById(R.id.messageList)
         scroll = findViewById(R.id.scroll)
@@ -114,7 +120,7 @@ class MainActivity : Activity() {
         thinkBar = findViewById(R.id.thinkBar)
         thinkVal = findViewById(R.id.thinkVal)
 
-        clearThreshold = dp(300)  // 在 onCreate 里转为像素（需 Context 就绪）
+        clearThreshold = dp(300) // 在 onCreate 里转为像素（需 Context 就绪）
 
         // 状态栏高度占位
         statusBarSpacer.post {
@@ -129,30 +135,48 @@ class MainActivity : Activity() {
         thinkLevel = getSharedPreferences("cfg", Context.MODE_PRIVATE).getInt("thinkLevel", 0)
         thinkBar.progress = thinkLevel
         refreshThinkLabel()
-        thinkBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                thinkLevel = progress
-                refreshThinkLabel()
-                if (fromUser) {
-                    getSharedPreferences("cfg", MODE_PRIVATE).edit().putInt("thinkLevel", thinkLevel).apply()
+        thinkBar.setOnSeekBarChangeListener(
+            object : android.widget.SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: android.widget.SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                    thinkLevel = progress
+                    refreshThinkLabel()
+                    if (fromUser) {
+                        getSharedPreferences("cfg", MODE_PRIVATE).edit().putInt("thinkLevel", thinkLevel).apply()
+                    }
                 }
-            }
-            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
-        })
+
+                override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+
+                override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            },
+        )
 
         sendBtn.backgroundTintList = null
 
         sendBtn.setOnClickListener { send() }
         input.setOnEditorActionListener { _, id, _ ->
-            if (id == EditorInfo.IME_ACTION_SEND) { send(); true } else false
+            if (id == EditorInfo.IME_ACTION_SEND) {
+                send()
+                true
+            } else {
+                false
+            }
         }
 
         // 键盘处理：adjustNothing，根容器按 IME insets 加底部 padding 让出键盘空间。
         // 这样聊天区和浮动输入面板整体上移，输入框浮在键盘上方，且无多余空白。
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             window.decorView.setOnApplyWindowInsetsListener { v, insets ->
-                val imeH = insets.getInsets(android.view.WindowInsets.Type.ime()).bottom
+                val imeH =
+                    insets
+                        .getInsets(
+                            android.view.WindowInsets.Type
+                                .ime(),
+                        ).bottom
                 if (rootLayout.paddingBottom != imeH) {
                     rootLayout.setPadding(0, 0, 0, imeH)
                 }
@@ -163,39 +187,43 @@ class MainActivity : Activity() {
             }
         } else {
             // API < 30：用 visible display frame 兜底
-            scroll.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    val r = Rect()
-                    scroll.getWindowVisibleDisplayFrame(r)
-                    val rootH = scroll.rootView.height
-                    val keyH = if (rootH - r.bottom > 150) rootH - r.bottom else 0
-                    if (rootLayout.paddingBottom != keyH) {
-                        rootLayout.setPadding(0, 0, 0, keyH)
+            scroll.viewTreeObserver.addOnGlobalLayoutListener(
+                object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        val r = Rect()
+                        scroll.getWindowVisibleDisplayFrame(r)
+                        val rootH = scroll.rootView.height
+                        val keyH = if (rootH - r.bottom > 150) rootH - r.bottom else 0
+                        if (rootLayout.paddingBottom != keyH) {
+                            rootLayout.setPadding(0, 0, 0, keyH)
+                        }
+                        if (keyH > 0) {
+                            scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
+                        }
                     }
-                    if (keyH > 0) {
-                        scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
-                    }
-                }
-            })
+                },
+            )
         }
 
         // 上滑清屏：在底部时快速上滑，清空聊天区
-        scroll.setOnScrollChangeListener(View.OnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-            val maxScroll = (messageList.height - scroll.height).coerceAtLeast(0)
-            val atBottom = maxScroll <= 0 || scrollY >= maxScroll - dp(16)
-            if (wasAtBottom && oldScrollY > 0 && oldScrollY > scrollY) {
-                val now = System.currentTimeMillis()
-                if (messageList.childCount > 1 && now - lastClearTime > CLEAR_COOLDOWN) {
-                    lastClearTime = now
-                    messageList.removeAllViews()
-                    setupHintView = null
-                    currentAiView = null
-                    currentAiText = null
-                    Toast.makeText(this@MainActivity, "已清屏", Toast.LENGTH_SHORT).show()
+        scroll.setOnScrollChangeListener(
+            View.OnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+                val maxScroll = (messageList.height - scroll.height).coerceAtLeast(0)
+                val atBottom = maxScroll <= 0 || scrollY >= maxScroll - dp(16)
+                if (wasAtBottom && oldScrollY > 0 && oldScrollY > scrollY) {
+                    val now = System.currentTimeMillis()
+                    if (messageList.childCount > 1 && now - lastClearTime > clearCooldown) {
+                        lastClearTime = now
+                        messageList.removeAllViews()
+                        setupHintView = null
+                        currentAiView = null
+                        currentAiText = null
+                        Toast.makeText(this@MainActivity, "已清屏", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
-            wasAtBottom = atBottom
-        })
+                wasAtBottom = atBottom
+            },
+        )
 
         settingsBtn.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -232,7 +260,8 @@ class MainActivity : Activity() {
         try {
             val arr = JSONArray(json)
             for (i in 0 until arr.length()) apis.add(arr.getJSONObject(i))
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
 
         activeApiIndex = prefs.getInt("activeApi", 0).coerceIn(0, (apis.size - 1).coerceAtLeast(0))
 
@@ -252,20 +281,27 @@ class MainActivity : Activity() {
     }
 
     private fun refreshModelSpinner() {
-        val modelNames = if (apis.isEmpty()) {
-            listOf(getString(R.string.msg_no_api))
-        } else {
-            apis.map { api ->
-                val name = api.optString("name", "")
-                val m = api.optString("model", "")
-                if (name.isNotEmpty() && m.isNotEmpty()) "$name · $m"
-                else if (name.isNotEmpty()) name else m
+        val modelNames =
+            if (apis.isEmpty()) {
+                listOf(getString(R.string.msg_no_api))
+            } else {
+                apis.map { api ->
+                    val name = api.optString("name", "")
+                    val m = api.optString("model", "")
+                    if (name.isNotEmpty() && m.isNotEmpty()) {
+                        "$name · $m"
+                    } else if (name.isNotEmpty()) {
+                        name
+                    } else {
+                        m
+                    }
+                }
             }
-        }
 
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modelNames).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
+        val adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_item, modelNames).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
         modelSpinner.adapter = adapter
 
         // 选中当前 active
@@ -273,62 +309,77 @@ class MainActivity : Activity() {
             modelSpinner.setSelection(activeApiIndex.coerceIn(0, modelNames.size - 1))
         }
 
-        modelSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (position != activeApiIndex && position < apis.size) {
-                    activeApiIndex = position
-                    val api = apis[activeApiIndex]
-                    apiKey = api.optString("key", "")
-                    baseUrl = api.optString("url", "").ifEmpty { "https://api.deepseek.com" }
-                    model = api.optString("model", "").ifEmpty { "deepseek-v4-flash" }
-                    endpoint = api.optString("endpoint", "chat").ifEmpty { "chat" }
-                    webSearchJson = api.optString("webSearch", "")
-                    // 快问快答：兜底过滤旧版推理模型
-                    if (model.contains("reason", ignoreCase = true)) model = "deepseek-v4-flash"
-                    getSharedPreferences("cfg", MODE_PRIVATE).edit().putInt("activeApi", activeApiIndex).apply()
+        modelSpinner.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: android.widget.AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long,
+                ) {
+                    if (position != activeApiIndex && position < apis.size) {
+                        activeApiIndex = position
+                        val api = apis[activeApiIndex]
+                        apiKey = api.optString("key", "")
+                        baseUrl = api.optString("url", "").ifEmpty { "https://api.deepseek.com" }
+                        model = api.optString("model", "").ifEmpty { "deepseek-v4-flash" }
+                        endpoint = api.optString("endpoint", "chat").ifEmpty { "chat" }
+                        webSearchJson = api.optString("webSearch", "")
+                        // 快问快答：兜底过滤旧版推理模型
+                        if (model.contains("reason", ignoreCase = true)) model = "deepseek-v4-flash"
+                        getSharedPreferences("cfg", MODE_PRIVATE).edit().putInt("activeApi", activeApiIndex).apply()
+                    }
                 }
+
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
             }
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
-        }
     }
 
     private fun refreshNetBtn() {
         netBtn.text = netLabels[netMode]
-        netBtn.setTextColor(when (netMode) {
-            0 -> 0xFFE53935.toInt()  // 红色
-            1 -> 0xFF43A047.toInt()  // 绿色
-            else -> 0xFF1A73E8.toInt() // 蓝色
-        })
+        netBtn.setTextColor(
+            when (netMode) {
+                0 -> 0xFFE53935.toInt()
+
+                // 红色
+                1 -> 0xFF43A047.toInt()
+
+                // 绿色
+                else -> 0xFF1A73E8.toInt() // 蓝色
+            },
+        )
     }
 
     /** 刷新思考模式标签文字 */
     private fun refreshThinkLabel() {
-        val names = arrayOf(
-            getString(R.string.think_off),
-            getString(R.string.think_low),
-            getString(R.string.think_medium),
-            getString(R.string.think_high),
-            getString(R.string.think_max)
-        )
+        val names =
+            arrayOf(
+                getString(R.string.think_off),
+                getString(R.string.think_low),
+                getString(R.string.think_medium),
+                getString(R.string.think_high),
+                getString(R.string.think_max),
+            )
         thinkVal.text = names[thinkLevel.coerceIn(0, 4)]
         thinkVal.setTextColor(if (thinkLevel == 0) 0xFF999999.toInt() else 0xFF1A73E8.toInt())
     }
 
     /** 按思考等级拼接 Chat Completions 思考参数 */
-    private fun thinkingChatParam(): JSONObject {
-        return JSONObject().put("type", if (thinkLevel == 0) "disabled" else "enabled")
-    }
+    private fun thinkingChatParam(): JSONObject = JSONObject().put("type", if (thinkLevel == 0) "disabled" else "enabled")
 
     /** 按思考等级拼接 Responses API 思考参数 */
     private fun reasoningParam(): JSONObject {
         // 0=none(关闭), 1=low, 2=medium→high, 3=high, 4=max
-        return JSONObject().put("effort", when (thinkLevel) {
-            0 -> "none"
-            1 -> "low"
-            2 -> "medium"
-            3 -> "high"
-            else -> "max"
-        })
+        return JSONObject().put(
+            "effort",
+            when (thinkLevel) {
+                0 -> "none"
+                1 -> "low"
+                2 -> "medium"
+                3 -> "high"
+                else -> "max"
+            },
+        )
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -339,18 +390,24 @@ class MainActivity : Activity() {
     }
 
     /** 本次请求是否注入联网搜索：0=不联网 1=强制 2=自动(有网才注入，由模型自主决定) */
-    private fun webSearchForce(): Boolean? {
-        return when (netMode) {
-            0 -> null          // 不联网
-            1 -> true          // 强制联网搜索
-            else -> if (isNetworkAvailable()) false else null  // 自动：有网→注入(自主)，无网→不注入
+    private fun webSearchForce(): Boolean? =
+        when (netMode) {
+            0 -> null
+
+            // 不联网
+            1 -> true
+
+            // 强制联网搜索
+            else -> if (isNetworkAvailable()) false else null // 自动：有网→注入(自主)，无网→不注入
         }
-    }
 
     private fun send() {
         val text = input.text.toString().trim()
         if (text.isEmpty() || busy) return
-        if (apiKey.isEmpty()) { startActivity(Intent(this, SettingsActivity::class.java)); return }
+        if (apiKey.isEmpty()) {
+            startActivity(Intent(this, SettingsActivity::class.java))
+            return
+        }
 
         when (text.lowercase()) {
             "/clear" -> {
@@ -361,7 +418,11 @@ class MainActivity : Activity() {
                 input.text.clear()
                 return
             }
-            "/quit", "/exit" -> { finish(); return }
+
+            "/quit", "/exit" -> {
+                finish()
+                return
+            }
         }
 
         busy = true
@@ -389,12 +450,13 @@ class MainActivity : Activity() {
         chatThinkSb.setLength(0)
         respThinkSb.setLength(0)
 
-        // 根据配置的端点路由：chat → chat 端点；responses → responses 端点；auto → 先试 responses
-        val useResponses = when (endpoint) {
-            "responses" -> true
-            "chat" -> false
-            else -> true // auto: 默认优先 responses（DeepSeek 联网在 responses）
-        }
+        // 根据配置的端点路由
+        val useResponses =
+            when (endpoint) {
+                "responses" -> true
+                "chat" -> false
+                else -> true
+            }
         if (useResponses) {
             val ok = postStream("/responses", ::buildResponsesBody, ::parseResponsesEvent)
             if (ok) {
@@ -418,19 +480,25 @@ class MainActivity : Activity() {
         // 思考等级：0=disabled，1-4=enabled + 对应 effort（Chat 用 thinking 参数）
         body.put("thinking", thinkingChatParam())
         if (thinkLevel > 0) {
-            body.put("reasoning_effort", when (thinkLevel) {
-                1 -> "low"
-                2 -> "medium"
-                3 -> "high"
-                else -> "max"
-            })
+            body.put(
+                "reasoning_effort",
+                when (thinkLevel) {
+                    1 -> "low"
+                    2 -> "medium"
+                    3 -> "high"
+                    else -> "max"
+                },
+            )
         }
-        body.put("messages", JSONArray().apply {
-            put(JSONObject().put("role", "system").put("content", systemPrompt))
-            history.forEach { (role, content) ->
-                put(JSONObject().put("role", role).put("content", content))
-            }
-        })
+        body.put(
+            "messages",
+            JSONArray().apply {
+                put(JSONObject().put("role", "system").put("content", systemPrompt))
+                history.forEach { (role, content) ->
+                    put(JSONObject().put("role", role).put("content", content))
+                }
+            },
+        )
         // 联网搜索注入
         val force = webSearchForce() ?: return
         injectWebSearch(body, force)
@@ -444,18 +512,24 @@ class MainActivity : Activity() {
         body.put("reasoning", reasoningParam())
         // instructions 作为第一条 system 消息（Responses API 规范）
         body.put("instructions", systemPrompt)
-        body.put("input", JSONArray().apply {
-            history.forEach { (role, content) ->
-                put(JSONObject().put("role", role).put("content", content))
-            }
-        })
+        body.put(
+            "input",
+            JSONArray().apply {
+                history.forEach { (role, content) ->
+                    put(JSONObject().put("role", role).put("content", content))
+                }
+            },
+        )
         // 联网搜索注入
         val force = webSearchForce() ?: return
         injectWebSearch(body, force)
     }
 
     /** 把联网模板合并进请求体；force=true 强制搜索，false 交给模型自主决定 */
-    private fun injectWebSearch(body: JSONObject, force: Boolean) {
+    private fun injectWebSearch(
+        body: JSONObject,
+        force: Boolean,
+    ) {
         val template = webSearchJson.trim()
         if (template.isEmpty()) {
             ui.post { updateAiText(getString(R.string.msg_no_web_template)) }
@@ -485,7 +559,7 @@ class MainActivity : Activity() {
     private fun postStream(
         path: String,
         buildBody: (JSONObject) -> Unit,
-        parser: (String) -> Unit
+        parser: (String) -> Unit,
     ): Boolean {
         var conn: HttpURLConnection? = null
         var success = false
@@ -495,26 +569,27 @@ class MainActivity : Activity() {
 
             val url = URL(SettingsActivity.apiUrl(baseUrl, path))
             val isAnthropic = webSearchJson.contains("web_search_20250305")
-            conn = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                setRequestProperty("Content-Type", "application/json")
-                if (isAnthropic) {
-                    setRequestProperty("x-api-key", apiKey)
-                    setRequestProperty("anthropic-version", "2023-06-01")
-                } else {
-                    setRequestProperty("Authorization", "Bearer $apiKey")
+            conn =
+                (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json")
+                    if (isAnthropic) {
+                        setRequestProperty("x-api-key", apiKey)
+                        setRequestProperty("anthropic-version", "2023-06-01")
+                    } else {
+                        setRequestProperty("Authorization", "Bearer $apiKey")
+                    }
+                    connectTimeout = 30_000
+                    readTimeout = 60_000
+                    doOutput = true
                 }
-                connectTimeout = 30_000
-                readTimeout = 60_000
-                doOutput = true
-            }
 
             OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
 
             if (conn.responseCode != 200) {
                 val err = BufferedReader(InputStreamReader(conn.errorStream)).use { it.readText() }
                 ui.post {
-                    updateAiText(getString(R.string.msg_error, "${conn.responseCode} (${path}): ${err.take(200)}"))
+                    updateAiText(getString(R.string.msg_error, "${conn.responseCode} ($path): ${err.take(200)}"))
                     currentAiText?.setTextColor(0xFFD32F2F.toInt())
                     finishTurn()
                 }
@@ -534,19 +609,20 @@ class MainActivity : Activity() {
                 if (data.contains("\"type\":\"response.completed\"") ||
                     data.contains("\"type\": \"response.completed\"") ||
                     data.contains("\"type\":\"response.failed\"") ||
-                    data.contains("\"type\":\"response.incomplete\"")) {
+                    data.contains("\"type\":\"response.incomplete\"")
+                ) {
                     done = true
                 }
                 try {
                     parser(data)
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             ui.post {
                 finishTurn()
             }
             success = true
-
         } catch (e: Exception) {
             ui.post {
                 updateAiText(getString(R.string.msg_error, e.message ?: ""))
@@ -562,6 +638,7 @@ class MainActivity : Activity() {
     /** 解析 Chat Completions SSE 行 */
     private val chatSb = StringBuilder()
     private val chatThinkSb = StringBuilder()
+
     private fun parseChatEvent(data: String) {
         val chunk = JSONObject(data)
         val choices = chunk.optJSONArray("choices") ?: return
@@ -585,6 +662,7 @@ class MainActivity : Activity() {
     /** 解析 Responses API SSE 事件行 */
     private val respSb = StringBuilder()
     private val respThinkSb = StringBuilder()
+
     private fun parseResponsesEvent(data: String) {
         val evt = JSONObject(data)
         when (evt.optString("type", "")) {
@@ -596,6 +674,7 @@ class MainActivity : Activity() {
                     ui.post { updateAiText(snapshot) }
                 }
             }
+
             "response.reasoning_text.delta" -> {
                 val delta = evt.optString("delta", "")
                 if (delta.isNotEmpty()) {
@@ -604,35 +683,43 @@ class MainActivity : Activity() {
                     ui.post { updateAiText("· " + snapshot.replace("\n", "\n· ")) }
                 }
             }
+
             "response.web_search_call.in_progress",
-            "response.web_search_call.searching" -> {
+            "response.web_search_call.searching",
+            -> {
                 ui.post { updateAiText(getString(R.string.msg_searching)) }
             }
         }
     }
 
     /** 添加一条消息气泡（圆角框容器，内含文本/表格） */
-    private fun addMessage(text: String, isUser: Boolean): LinearLayout {
+    private fun addMessage(
+        text: String,
+        isUser: Boolean,
+    ): LinearLayout {
         // 气泡容器：带圆角背景，垂直排列（文本 + 表格）
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundResource(if (isUser) R.drawable.bubble_user else R.drawable.bubble_ai)
-            setPadding(dp(14), dp(10), dp(14), dp(10))
-        }
+        val container =
+            LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setBackgroundResource(if (isUser) R.drawable.bubble_user else R.drawable.bubble_ai)
+                setPadding(dp(14), dp(10), dp(14), dp(10))
+            }
         // 文本子视图
-        val tv = TextView(this).apply {
-            this.text = text
-            textSize = 15f
-            setLineSpacing(0f, 1.3f)
-            setTextColor(if (isUser) 0xFF1B5E20.toInt() else 0xFF303030.toInt())
-        }
+        val tv =
+            TextView(this).apply {
+                this.text = text
+                textSize = 15f
+                setLineSpacing(0f, 1.3f)
+                setTextColor(if (isUser) 0xFF1B5E20.toInt() else 0xFF303030.toInt())
+            }
         container.addView(tv)
         if (!isUser) currentAiText = tv
 
-        val lp = LinearLayout.LayoutParams(
-            if (isUser) LinearLayout.LayoutParams.WRAP_CONTENT else LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
+        val lp =
+            LinearLayout.LayoutParams(
+                if (isUser) LinearLayout.LayoutParams.WRAP_CONTENT else LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            )
         if (isUser) lp.gravity = android.view.Gravity.END
         lp.topMargin = dp(6)
         lp.bottomMargin = dp(6)
@@ -645,12 +732,15 @@ class MainActivity : Activity() {
 
     /** 问答之间插入一条竖线分隔 */
     private fun addDivider() {
-        val line = View(this).apply {
-            setBackgroundResource(R.drawable.divider_line)
-        }
-        val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(1)
-        )
+        val line =
+            View(this).apply {
+                setBackgroundResource(R.drawable.divider_line)
+            }
+        val lp =
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(1),
+            )
         lp.topMargin = dp(6)
         lp.bottomMargin = dp(6)
         messageList.addView(line, lp)
@@ -669,13 +759,14 @@ class MainActivity : Activity() {
     /** 确保"上滑清除"提示在消息列表最末尾 */
     private fun ensureClearHint() {
         if (clearHint == null) {
-            clearHint = TextView(this).apply {
-                text = getString(R.string.swipe_clear_hint)
-                textSize = 11f
-                setTextColor(0xFFBBBBBB.toInt())
-                gravity = android.view.Gravity.CENTER
-                setPadding(0, dp(8), 0, dp(4))
-            }
+            clearHint =
+                TextView(this).apply {
+                    text = getString(R.string.swipe_clear_hint)
+                    textSize = 11f
+                    setTextColor(0xFFBBBBBB.toInt())
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, dp(8), 0, dp(4))
+                }
         }
         val hint = clearHint!!
         if (hint.parent != null) {
@@ -696,7 +787,7 @@ class MainActivity : Activity() {
         }
     }
 
-    /** 动态给聊天区设置底部 padding = 浮动输入面板本体高度（adjustResize 已处理键盘），避免内容被遮挡 */
+    /** 动态给聊天区设置底部 padding = 浮动输入面板本体高度 */
     private fun updateChatBottomPadding() {
         inputPanel.post {
             val target = if (inputPanel.height > 0) inputPanel.height + dp(8) else dp(130)
@@ -725,12 +816,13 @@ class MainActivity : Activity() {
                 if (isTable) {
                     container.addView(buildTableFromMarkdown(blockText))
                 } else {
-                    val tv = TextView(this).apply {
-                        text = Markdown.render(blockText)
-                        textSize = 15f
-                        setLineSpacing(0f, 1.3f)
-                        setTextColor(0xFF303030.toInt())
-                    }
+                    val tv =
+                        TextView(this).apply {
+                            text = Markdown.render(blockText)
+                            textSize = 15f
+                            setLineSpacing(0f, 1.3f)
+                            setTextColor(0xFF303030.toInt())
+                        }
                     container.addView(tv)
                 }
             }
@@ -739,15 +831,19 @@ class MainActivity : Activity() {
     }
 
     /**
-     * 从 Markdown 表格文本构建网格表格（系统自带控件 + 权重平分列宽 + 自动换行 + 行列分隔线）。
-     * 返回垂直 LinearLayout（每行一个水平 LinearLayout，每列 TextView 用 weight 平分并允许换行）。
+     * 从 Markdown 表格文本构建网格表格（系统自带控件 + 权重平分列宽）。
+     * 返回垂直 LinearLayout（每行一个水平 LinearLayout，每列 TextView 用 weight 平分）。
      */
     private fun buildTableFromMarkdown(mdTable: String): android.widget.LinearLayout {
         val lines = mdTable.split("\n").filter { it.trim().isNotBlank() }
         val dataLines = ArrayList<String>()
         var first = true
         for (l in lines) {
-            if (first) { dataLines.add(l); first = false; continue }
+            if (first) {
+                dataLines.add(l)
+                first = false
+                continue
+            }
             if (isTableSeparatorLine(l.trim())) continue
             dataLines.add(l)
         }
@@ -756,43 +852,57 @@ class MainActivity : Activity() {
         // 列数 = 第一行的单元格数
         val colCount = parseMarkdownTableCell(dataLines[0]).size.coerceAtLeast(1)
 
-        val container = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            layoutParams = android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
+        val container =
+            android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                layoutParams =
+                    android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    )
+            }
 
         dataLines.forEachIndexed { rowIndex, rowText ->
             val cells = parseMarkdownTableCell(rowText)
-            val row = android.widget.LinearLayout(this).apply {
-                orientation = android.widget.LinearLayout.HORIZONTAL
-                layoutParams = android.widget.LinearLayout.LayoutParams(
-                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
+            val row =
+                android.widget.LinearLayout(this).apply {
+                    orientation = android.widget.LinearLayout.HORIZONTAL
+                    layoutParams =
+                        android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        )
+                }
             for (ci in 0 until colCount) {
                 val cellText = if (ci < cells.size) cells[ci] else ""
-                val tv = TextView(this).apply {
-                    text = cellText
-                    textSize = 14f
-                    // 允许换行（不限制 maxLines），并设置 minWidth 让长文本折行
-                    setLineSpacing(0f, 1.1f)
-                    setPadding(dp(8), dp(6), dp(8), dp(6))
-                    if (rowIndex == 0) typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(0xFF303030.toInt())
-                }
-                val lp = android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f
-                )
+                val tv =
+                    TextView(this).apply {
+                        text = cellText
+                        textSize = 14f
+                        // 允许换行（不限制 maxLines），并设置 minWidth 让长文本折行
+                        setLineSpacing(0f, 1.1f)
+                        setPadding(dp(8), dp(6), dp(8), dp(6))
+                        if (rowIndex == 0) typeface = Typeface.DEFAULT_BOLD
+                        setTextColor(0xFF303030.toInt())
+                    }
+                val lp =
+                    android.widget.LinearLayout.LayoutParams(
+                        0,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f,
+                    )
                 row.addView(tv, lp)
                 // 列分隔线（最后一列后不加）
                 if (ci < colCount - 1) {
-                    row.addView(View(this).apply {
-                        setBackgroundColor(0xFFDADADA.toInt())
-                    }, android.widget.LinearLayout.LayoutParams(dp(1), android.widget.LinearLayout.LayoutParams.MATCH_PARENT))
+                    row.addView(
+                        View(this).apply {
+                            setBackgroundColor(0xFFDADADA.toInt())
+                        },
+                        android.widget.LinearLayout.LayoutParams(
+                            dp(1),
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        ),
+                    )
                 }
             }
             container.addView(row)
@@ -800,11 +910,15 @@ class MainActivity : Activity() {
             if (rowIndex % 2 == 1) row.setBackgroundColor(0xFFF3F6FB.toInt())
             // 行分隔线（表头下 + 数据行之间）
             if (rowIndex == 0 || (rowIndex < dataLines.size - 1)) {
-                container.addView(View(this).apply {
-                    setBackgroundColor(if (rowIndex == 0) 0xFFC0C0C0.toInt() else 0xFFE0E0E0.toInt())
-                }, android.widget.LinearLayout.LayoutParams(
-                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(1)
-                ))
+                container.addView(
+                    View(this).apply {
+                        setBackgroundColor(if (rowIndex == 0) 0xFFC0C0C0.toInt() else 0xFFE0E0E0.toInt())
+                    },
+                    android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        dp(1),
+                    ),
+                )
             }
         }
         return container

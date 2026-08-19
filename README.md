@@ -1,6 +1,6 @@
 # QR-AI
 > **船新赤石科技 ```QR-AI``` 在 ```DeepSeek Harness```、```Xiaomi MiMo V2.5``` 与 ```DeepSeek-V4-Flash``` 的辅助下正式诞生！**
-> 
+>
 > 在这个项目中，你可以见到**包括但不限于：**
 > - ```≤100kb``` 的传奇应用体积
 > - 纯机写的**不完全** ```Markdown``` 与 ```LaTeX``` 支持

@@ -1,0 +1,20 @@
+repos:
+  # 通用钩子：去除尾随空格、修复 EOF 等
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # Ktlint – Kotlin 代码风格检查
+  - repo: local
+    hooks:
+      - id: ktlint-format
+        name: ktlint-format
+        entry: ktlint --format   # 直接调用，不经过 Gradle
+        language: system
+        files: \.kt$|\.kts$
+        pass_filenames: true      # 必须开启，只传修改的文件
+        stages: [ pre-commit ]
