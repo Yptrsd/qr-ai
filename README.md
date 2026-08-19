@@ -1,7 +1,9 @@
 # QR-AI
+
 > **船新赤石科技 ```QR-AI``` 在 ```DeepSeek Harness```、```Xiaomi MiMo V2.5``` 与 ```DeepSeek-V4-Flash``` 的辅助下正式诞生！**
 >
 > 在这个项目中，你可以见到**包括但不限于：**
+>
 > - ```≤100kb``` 的传奇应用体积
 > - 纯机写的**不完全** ```Markdown``` 与 ```LaTeX``` 支持
 > - **强行适配、全靠硬配**的联网搜索与API服务
@@ -9,7 +11,6 @@
 > - **外星科技**上滑清屏
 > - 拒绝使用 ```Flutter``` 与 ```Dart``` ，纯 ```Kotlin``` 实现，真正杜绝跨平台问题
 > - 启动之快宛如**看到核弹爆炸、瘫坐在椅子上**！
-
 
 **轻量、零依赖的原生 Android LLM 聊天客户端** · **A minimal, zero-dependency native Android LLM chat client**
 
@@ -33,14 +34,14 @@ QR-AI is a native Android (Kotlin) app for **streaming conversations** with any 
 
 ## 📋 技术栈 · Tech Stack
 
-| 项目 Item | 值 Value |
-| --- | --- |
-| 语言 Language | Kotlin (JVM 11 / 工具链 25) |
-| UI | 原生 View（无 Compose） |
-| 最小 API · minSdk | 24 (Android 7.0) |
-| 目标 / 编译 API | targetSdk / compileSdk 36 |
-| 构建 Build | Gradle 9.7 + AGP 9.3.1 |
-| 依赖 Dependencies | **无**（全部 Android SDK 自带） |
+| 项目 Item         | 值 Value                   |
+| --------------- | ------------------------- |
+| 语言 Language     | Kotlin (JVM 11 / 工具链 25)  |
+| UI              | 原生 View（无 Compose）        |
+| 最小 API · minSdk | 24 (Android 7.0)          |
+| 目标 / 编译 API     | targetSdk / compileSdk 36 |
+| 构建 Build        | Gradle 9.7 + AGP 9.3.1    |
+| 依赖 Dependencies | **无**（全部 Android SDK 自带）  |
 
 ---
 
@@ -108,11 +109,11 @@ qr-ai/
 
 ### 核心实现 · Core Modules
 
-| 文件 File | 职责 Responsibility |
-| --- | --- |
-| `MainActivity.kt` | 聊天 UI、SSE 流式请求与解析、思考模式、联网搜索注入、上滑清屏 |
+| 文件 File               | 职责 Responsibility                             |
+| --------------------- | --------------------------------------------- |
+| `MainActivity.kt`     | 聊天 UI、SSE 流式请求与解析、思考模式、联网搜索注入、上滑清屏            |
 | `SettingsActivity.kt` | 多 API 管理（预设/编辑/删除/选中）、模型列表拉取、System Prompt 配置 |
-| `Markdown.kt` | 纯 Spannable 的 Markdown + 轻量 LaTeX 渲染器 |
+| `Markdown.kt`         | 纯 Spannable 的 Markdown + 轻量 LaTeX 渲染器         |
 
 ### 请求架构 · Request Architecture
 
@@ -127,6 +128,45 @@ qr-ai/
 - `resConfigs("zh", "en")`：仅打包中英文资源，减小体积。
 - Release 构建开启 `minifyEnabled` + `shrinkResources`（ProGuard/R8 混淆）。
 - 当前 `debug` 构建的 release 包**临时使用 debug 签名**，便于直接安装测试体积（正式发布请替换为正式签名）。
+
+---
+
+## 🔍 Pre-commit 指南 · Code Style Guide
+
+本项目使用 [pre-commit](https://pre-commit.com/) 在每次 `git commit` 前自动检查代码风格，确保提交的代码整洁一致。
+
+### 安装 · Install
+
+```bash
+# 安装 pre-commit（如尚未安装）
+pip install pre-commit
+
+# 在项目根目录启用钩子（只需执行一次）
+pre-commit install
+```
+
+### 运行 · Usage
+
+```bash
+# 手动对所有文件运行检查
+pre-commit run --all-files
+
+# 只运行指定钩子
+pre-commit run trailing-whitespace --all-files
+pre-commit run ktlint-format --all-files
+```
+
+### 当前钩子 · Available Hooks
+
+| 钩子 Hook                   | 说明 Description                                   |
+| ------------------------- | ------------------------------------------------ |
+| `trailing-whitespace`     | 自动去除行尾空格                                         |
+| `end-of-file-fixer`       | 确保文件末尾有换行符                                       |
+| `check-yaml`              | 校验 YAML 文件语法                                     |
+| `check-added-large-files` | 阻止提交超大文件                                         |
+| `ktlint-format`           | 自动格式化 Kotlin 代码（行宽 ≤120、import 排序、if-wrapping 等） |
+
+> 💡 `ktlint-format` 会**自动修复**大部分格式问题。如果遇到无法自动修复的报错（如 `property-naming`、`if-else-wrapping`），需要手动修改代码后重新提交。
 
 ---
 
