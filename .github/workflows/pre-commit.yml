@@ -23,6 +23,16 @@ jobs:
           # 如果钩子需要 Gradle 或 Maven 依赖，可以在此缓存
           cache: 'gradle'   # 或 'maven'，根据你的构建工具选择
 
+      # ---------- 设置 Ktlint ----------
+      - name: Install ktlint
+        run: |
+          # 下载最新版 ktlint (1.0.0 及以上为独立可执行文件)
+          curl -sSLO https://github.com/pinterest/ktlint/releases/latest/download/ktlint
+          chmod a+x ktlint
+          sudo mv ktlint /usr/local/bin/
+          # 验证安装
+          ktlint --version
+
       # ---------- 设置 Python（pre-commit 本身需要） ----------
       - name: Set up Python
         uses: actions/setup-python@v5
