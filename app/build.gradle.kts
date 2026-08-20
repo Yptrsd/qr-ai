@@ -11,8 +11,8 @@ android {
         applicationId = "com.qrai"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "0.1.1-alpha"
         // 只保留中文+英文资源，减少多语言资源体积
         resConfigs("zh", "en")
     }
