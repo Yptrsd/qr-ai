@@ -1,12 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
 }
 
 android {
     namespace = "com.qrai"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.qrai"
@@ -49,18 +48,4 @@ android {
 
 dependencies {
     // 零依赖。所有东西用 Android SDK 自带的。
-}
-
-// Detekt 配置
-detekt {
-    buildUponDefaultConfig = true
-    allRules = false
-    config.setFrom("$rootDir/config/detekt/detekt.yml")
-    jvmTarget = "22"
-}
-
-// Ktlint 配置
-ktlint {
-    android = true
-    enableExperimentalRules = false
 }

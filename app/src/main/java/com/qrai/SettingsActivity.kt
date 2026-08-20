@@ -523,8 +523,7 @@ class SettingsActivity : Activity() {
                 override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
             }
         if (isEdit) {
-            // 编辑模式：选中"自定义"（index 3）但不触发 applyPreset，保留预填值
-            lastPresetPos = 3
+            // 编辑模式：选中"自定义"但不触发 applyPreset，保留预填值
             presetSpinner.setSelection(8, false)
             // 确保预填值不被任何初始化覆盖：显式重设一次
             nameEt.setText(editApi?.optString("name", "") ?: "")
@@ -539,8 +538,15 @@ class SettingsActivity : Activity() {
                     else -> 0
                 },
             )
+            // 关键：setSelection 的回调是异步的（onItemSelected 稍后才触发），
+            // 这里把 lastPresetPos 同步为 8，让稍后到达的 onItemSelected(8) 不再执行
+            // applyPreset(8)（它会覆盖上面显式重设的预填值）。用户手动选择时
+            // position 变化（!= 8）才会 applyPreset。
+            lastPresetPos = 8
         } else {
             presetSpinner.setSelection(8, false)
+            // 新增模式同样同步，避免异步回调把默认 DeepSeek 填充覆盖成"自定义"+空值
+            lastPresetPos = 8
         }
 
         // 模型列表（在 dialog 之前声明，供保存按钮 lambda 捕获）

@@ -73,10 +73,15 @@ class MainActivity : Activity() {
     private var clearHint: TextView? = null
 
     // 上滑清屏：滚到底部后向上滑动超阈值触发，带冷却防抖
-    private var wasAtBottom = true
     private var lastClearTime = 0L
     private var clearThreshold = 300 // dp 值，onCreate 里转为像素
     private val clearCooldown = 1000L // 1秒冷却
+
+    // 上滑清屏：基于触摸位移检测（不依赖 scrollY，避免 overscroll / IME 干扰）
+    private var swipeUpAccumulated = 0 // 累计上滑距离（像素）
+    private var fingerDown = false // 手指是否按下
+    private var lastTouchY = 0f // 上一次手指 Y 坐标
+    private var touchDownAtBottom = false // 按下时是否已在底部
 
     // APIs list from settings
     private var apis = mutableListOf<JSONObject>()
@@ -205,23 +210,86 @@ class MainActivity : Activity() {
             )
         }
 
-        // 上滑清屏：在底部时快速上滑，清空聊天区
-        scroll.setOnScrollChangeListener(
-            View.OnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-                val maxScroll = (messageList.height - scroll.height).coerceAtLeast(0)
-                val atBottom = maxScroll <= 0 || scrollY >= maxScroll - dp(16)
-                if (wasAtBottom && oldScrollY > 0 && oldScrollY > scrollY) {
-                    val now = System.currentTimeMillis()
-                    if (messageList.childCount > 1 && now - lastClearTime > clearCooldown) {
-                        lastClearTime = now
-                        messageList.removeAllViews()
-                        setupHintView = null
-                        currentAiView = null
-                        currentAiText = null
-                        Toast.makeText(this@MainActivity, "已清屏", Toast.LENGTH_SHORT).show()
+        // 上滑清屏：在底部时向上滑动累计距离超阈值，松手时触发清屏。
+        // 注意：不依赖 onScrollChangeListener 的 scrollY（到底后 overscroll 时 scrollY 不变、且 IME 会干扰），
+        // 直接基于触摸位移（ACTION_MOVE 的 y 变化）检测，对 overscroll 回弹和 IME 弹出免疫。
+        scroll.setOnTouchListener(
+            object : View.OnTouchListener {
+                override fun onTouch(
+                    v: View?,
+                    event: android.view.MotionEvent,
+                ): Boolean {
+                    when (event.actionMasked) {
+                        android.view.MotionEvent.ACTION_DOWN -> {
+                            fingerDown = true
+                            lastTouchY = event.y
+                            touchDownAtBottom = isAtBottom()
+                            android.util.Log.d("SwipeClear", "DOWN atBottom=$touchDownAtBottom scrollY=${scroll.scrollY}")
+                        }
+
+                        android.view.MotionEvent.ACTION_MOVE -> {
+                            if (fingerDown) {
+                                val dy = lastTouchY - event.y // >0 手指上移；<0 手指下移
+                                lastTouchY = event.y
+                                val now = System.currentTimeMillis()
+                                if (messageList.childCount > 1 && now - lastClearTime > clearCooldown) {
+                                    if (dy > 0) {
+                                        // 手指上滑：仅在底部（或按下的那一刻在底部）累计
+                                        if (touchDownAtBottom || isAtBottom()) {
+                                            touchDownAtBottom = true
+                                            swipeUpAccumulated += dy.toInt()
+                                            android.util.Log.d(
+                                                "SwipeClear",
+                                                "MOVE up dy=$dy acc=$swipeUpAccumulated th=$clearThreshold scrollY=${scroll.scrollY}",
+                                            )
+                                            // 更新提示：显示进度；达标后显示"↑ 松手清除！"
+                                            updateClearHintProgress()
+                                        }
+                                    } else if (dy < 0 && swipeUpAccumulated > 0) {
+                                        // 手指下滑：取消进度
+                                        swipeUpAccumulated = 0
+                                        resetClearHintProgress()
+                                        android.util.Log.d("SwipeClear", "MOVE down reset")
+                                    }
+                                }
+                            }
+                        }
+
+                        android.view.MotionEvent.ACTION_UP -> {
+                            if (fingerDown) {
+                                if (swipeUpAccumulated >= clearThreshold) {
+                                    // 达标后松手 → 清除
+                                    lastClearTime = System.currentTimeMillis()
+                                    messageList.removeAllViews()
+                                    setupHintView = null
+                                    currentAiView = null
+                                    currentAiText = null
+                                    swipeUpAccumulated = 0
+                                    resetClearHintProgress()
+                                    android.util.Log.d("SwipeClear", "UP CLEARED")
+                                    Toast.makeText(this@MainActivity, "已清屏", Toast.LENGTH_SHORT).show()
+                                } else if (swipeUpAccumulated > 0) {
+                                    // 未达阈值松手 → 取消清除，弹回底部
+                                    swipeUpAccumulated = 0
+                                    resetClearHintProgress()
+                                    scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
+                                    android.util.Log.d("SwipeClear", "UP canceled")
+                                }
+                            }
+                            fingerDown = false
+                            lastTouchY = 0f
+                        }
+
+                        android.view.MotionEvent.ACTION_CANCEL -> {
+                            // 手势被系统中断（如父视图抢事件）：不执行清除，仅重置
+                            swipeUpAccumulated = 0
+                            resetClearHintProgress()
+                            fingerDown = false
+                            lastTouchY = 0f
+                        }
                     }
+                    return false // 不消费，保证 ScrollView 正常滚动
                 }
-                wasAtBottom = atBottom
             },
         )
 
@@ -756,6 +824,12 @@ class MainActivity : Activity() {
         scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
+    /** 判断当前是否已滚动到聊天区底部 */
+    private fun isAtBottom(): Boolean {
+        val maxScroll = (messageList.height - scroll.height).coerceAtLeast(0)
+        return maxScroll <= 0 || scroll.scrollY >= maxScroll - dp(16)
+    }
+
     /** 确保"上滑清除"提示在消息列表最末尾 */
     private fun ensureClearHint() {
         if (clearHint == null) {
@@ -773,6 +847,33 @@ class MainActivity : Activity() {
             (hint.parent as? android.view.ViewGroup)?.removeView(hint)
         }
         messageList.addView(hint)
+    }
+
+    /** 根据上滑进度更新清除提示文字和颜色 */
+    private fun updateClearHintProgress() {
+        val hint = clearHint ?: return
+        val ratio = (swipeUpAccumulated.toFloat() / clearThreshold).coerceIn(0f, 1f)
+        if (ratio <= 0f) {
+            hint.text = getString(R.string.swipe_clear_hint)
+            hint.setTextColor(0xFFBBBBBB.toInt())
+        } else if (ratio < 1f) {
+            val percent = (ratio * 100).toInt()
+            hint.text = "↑ 上滑清除 ($percent%)"
+            // 从灰色渐变到红色
+            val r = (0xBB + ((0xFF - 0xBB) * ratio)).toInt().coerceAtMost(0xFF)
+            val g = (0xBB * (1f - ratio)).toInt()
+            hint.setTextColor(0xFF shl 24 or (r shl 16) or (g shl 8) or 0xBB)
+        } else {
+            hint.text = "↑ 松手清除！"
+            hint.setTextColor(0xFFE53935.toInt())
+        }
+    }
+
+    /** 重置清除提示为默认状态 */
+    private fun resetClearHintProgress() {
+        val hint = clearHint ?: return
+        hint.text = getString(R.string.swipe_clear_hint)
+        hint.setTextColor(0xFFBBBBBB.toInt())
     }
 
     /** 根据是否有 API Key，显示/移除"请先设置 API"提示 */
