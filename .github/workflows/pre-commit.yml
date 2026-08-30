@@ -15,11 +15,11 @@ jobs:
         uses: actions/checkout@v4
 
       # ---------- 设置 Java（Kotlin 钩子需要） ----------
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           # 如果钩子需要 Gradle 或 Maven 依赖，可以在此缓存
           cache: 'gradle'   # 或 'maven'，根据你的构建工具选择
 
